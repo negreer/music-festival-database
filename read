@@ -1,0 +1,132 @@
+<?php
+
+// Include your required files
+require_once("session.php"); 
+require_once("included_functions.php");
+require_once("database.php"); 
+
+// --- THIS IS THE CRITICAL FIX ---
+// Call your Database class's static method to get the PDO object
+$pdo = Database::DBConnect(); 
+
+// ... rest of your script logic ...
+
+// Define the SQL query with a JOIN operation (required for Milestone 4)
+// Joins Performance, Artist (via NATURAL JOIN), and Stage
+$sql = "
+    SELECT
+        P.PerformanceID,    -- Included for backend Update/Delete links
+        A.ArtistName,
+        S.StageName,
+        P.StartTime,
+        P.EndTime
+    FROM
+        Performance P
+    NATURAL JOIN 
+        Artist A            -- Uses NATURAL JOIN for ArtistID = ArtistID
+    INNER JOIN 
+        Stage S ON P.StageID = S.StageID
+    ORDER BY
+        P.StartTime
+    LIMIT 20;               -- Ensures at least 15 records are retrieved
+";
+
+try {
+    $stmt = $pdo->query($sql);
+    $performances = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+} catch (\PDOException $e) {
+    $error = "Error fetching performances: " . $e->getMessage();
+    $performances = [];
+}
+
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Music Festival Performances (CSCI 375)</title>
+    <style>
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .action-buttons a { margin-right: 5px; text-decoration: none; padding: 5px 10px; border: 1px solid #ccc; background-color: #eee; }
+    </style>
+</head>
+<body>
+    <h1>Music Festival Performances</h1>
+
+    <?php if (isset($_GET['success'])): ?>
+        <p style="color: green; font-weight: bold;">Record successfully <?php echo htmlspecialchars($_GET['success']); ?>!</p>
+    <?php endif; ?>
+
+    <?php if (isset($error)): ?>
+        <p style="color: red;"><?php echo $error; ?></p>
+    <?php endif; ?>
+
+    <p>
+        <a href="GreerMilestone4Create.php" style="background-color: #4CAF50; color: white; padding: 10px 15px; border-radius: 5px;">
+            ➕ Create New Performance
+        </a>
+    </p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Artist</th>
+                <th>Stage</th>
+                <th>Start Time</th>
+                <th>End Time</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if (count($performances) > 0): ?>
+                <?php foreach ($performances as $performance): ?>
+                    <tr>
+                        <td><?php echo htmlspecialchars($performance['ArtistName']); ?></td>
+                        <td><?php echo htmlspecialchars($performance['StageName']); ?></td>
+                        <td><?php echo date('Y-m-d H:i', strtotime($performance['StartTime'])); ?></td>
+                        <td><?php echo date('Y-m-d H:i', strtotime($performance['EndTime'])); ?></td>
+                        
+                        <td class="action-buttons">
+                            <a href="GreerMilestone4Update.php?id=<?php echo htmlspecialchars($performance['PerformanceID']); ?>" style="background-color: #2196F3; color: white;">Update</a>
+                            
+                            <a href="GreerMilestone4Delete.php?id=<?php echo htmlspecialchars($performance['PerformanceID']); ?>" 
+                                onclick="return confirm('Are you sure you want to delete the performance by <?php echo addslashes($performance['ArtistName']); ?>?');"
+                                style="background-color: #f44336; color: white;">Delete</a>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <tr>
+                    <td colspan="5">No performances found in the database. Please add some via the Create link.</td>
+                </tr>
+            <?php endif; ?>
+        </tbody>
+    </table>
+
+    <hr>
+    
+    <h2>Milestone 3 Query Results</h2>
+    <ul>
+        <li>
+    <a href="GreerMilestone4Queries.php?type=aggregate">
+        **Aggregate Query:** Number of Attendees and Average Ticket Price by Ticket Type.
+    </a>
+</li>
+<li>
+    <a href="GreerMilestone4Queries.php?type=nested">
+        **Nested Query:** Attendees who purchased tickets above the average price.
+    </a>
+</li>
+<li>
+    <a href="GreerMilestone4Queries.php?type=instructor">
+        **Dr. Trotter's Query:** Total Revenue and Number of Buyers per Ticket Type.
+    </a>
+</li>
+    </ul>
+
+</body>
+</html>
