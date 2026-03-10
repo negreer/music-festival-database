@@ -1,0 +1,156 @@
+<?php
+// Include your required files
+require_once("session.php"); 
+require_once("included_functions.php");
+require_once("database.php"); 
+
+// --- THIS IS THE CRITICAL FIX ---
+// Call your Database class's static method to get the PDO object
+$pdo = Database::DBConnect(); 
+
+// ... rest of your script logic ...
+
+// 1. Determine which query to run based on the URL parameter 'type'
+$query_type = isset($_GET['type']) ? $_GET['type'] : 'none';
+$sql = "";
+$title = "";
+$description = "";
+
+switch ($query_type) {
+    case 'aggregate':
+        $title = "Aggregate Query Results";
+        $description = "Shows the **Number of Attendees** and the **Average Ticket Price** for each **Ticket Type** (Uses NATURAL JOIN, COUNT, AVG, GROUP BY, ORDER BY).";
+        $sql = "
+            SELECT
+                t.TicketType,
+                COUNT(a.AttendeeID) AS NumOfAttendees,
+                AVG(t.Price) AS AvgTicketPrice
+            FROM
+                Ticket t
+            NATURAL JOIN 
+                Attendee a
+            GROUP BY
+                t.TicketType
+            ORDER BY
+                t.TicketType
+        ";
+        break;
+
+    case 'nested':
+        $title = "Nested Query Results";
+        $description = "Retrieves the Name, Email, and Price of tickets for all **Attendees who purchased tickets with a price greater than the average ticket price** (Uses Nested Query).";
+        $sql = "
+            SELECT
+                a.Name,
+                a.Email,
+                t.Price
+            FROM
+                Attendee a
+            NATURAL JOIN 
+                Ticket t
+            WHERE
+                t.Price > (SELECT AVG(Price) FROM Ticket)
+        ";
+        break;
+
+    case 'instructor':
+        $title = "Dr. Trotter's Query Results";
+        $description = "Calculates the **Total Revenue** generated and the **Number of Buyers** for each **Ticket Type** (Uses LEFT OUTER JOIN, SUM, COUNT, GROUP BY).";
+        $sql = "
+            SELECT
+                t.TicketType,
+                SUM(t.Price) AS TotalRevenue,
+                COUNT(a.AttendeeID) AS NumOfBuyers
+            FROM
+                Ticket t
+            LEFT OUTER JOIN 
+                Attendee a ON a.AttendeeID = t.AttendeeID
+            GROUP BY
+                t.TicketType
+            ORDER BY
+                TotalRevenue DESC
+        ";
+        break;
+    
+    default:
+        $title = "Error: Query Not Selected";
+        $error = "Please select a query from the index page.";
+        break;
+}
+
+// 2. Execute the query if a valid type was selected
+$results = [];
+if (!isset($error) && $sql) {
+    try {
+        $stmt = $pdo->query($sql);
+        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+    } catch (\PDOException $e) {
+        $error = "Database Error: " . $e->getMessage();
+    }
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title><?php echo htmlspecialchars($title); ?></title>
+    <style>
+        table { width: 80%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h1>Milestone 3: <?php echo htmlspecialchars($title); ?></h1>
+    <p>
+        **Query Description:** <?php echo htmlspecialchars($description); ?>
+    </p>
+
+    <?php if (isset($error)): ?>
+        <p style="color: red;"><?php echo $error; ?></p>
+    <?php else: ?>
+        <h3>SQL Used:</h3>
+        <pre><?php echo htmlspecialchars(trim($sql)); ?></pre>
+
+        <h3>Results:</h3>
+        <?php if (!empty($results)): ?>
+        <table>
+            <thead>
+                <tr>
+                    <?php 
+                    // Use the keys of the first result row for column headers
+                    foreach (array_keys($results[0]) as $column): 
+                    ?>
+                        <th><?php echo htmlspecialchars($column); ?></th>
+                    <?php endforeach; ?>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($results as $row): ?>
+                    <tr>
+                        <?php foreach ($row as $key => $value): ?>
+                            <td>
+                                <?php 
+                                // Format currency columns specifically (assumes 'Price', 'Revenue' keys)
+                                if (strpos($key, 'Price') !== false || strpos($key, 'Revenue') !== false):
+                                    echo '$' . number_format($value, 2);
+                                else:
+                                    echo htmlspecialchars($value);
+                                endif;
+                                ?>
+                            </td>
+                        <?php endforeach; ?>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+        <?php else: ?>
+            <p>No results found for this query.</p>
+        <?php endif; ?>
+    <?php endif; ?>
+    
+    <p><a href="GreerMilestone4Read.php">Back to Performance List (Read)</a></p>
+</body>
+</html>
