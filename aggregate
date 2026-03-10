@@ -1,0 +1,83 @@
+<?php
+/**
+ * query_aggregate.php
+ * Displays the result of the Milestone 3 Aggregate Query.
+ */
+
+require_once 'included_functions.php';
+
+$pdo = db_connect(); 
+
+// SQL for Aggregate Query (from your Milestone 3 file):
+$sql = "
+    SELECT
+        t.TicketType,
+        COUNT(a.AttendeeID) AS NumOfAttendees,
+        AVG(t.Price) AS AvgTicketPrice
+    FROM
+        Ticket t
+    NATURAL JOIN 
+        Attendee a
+    GROUP BY
+        t.TicketType
+    ORDER BY
+        t.TicketType
+";
+
+try {
+    $stmt = $pdo->query($sql);
+    $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+} catch (\PDOException $e) {
+    $error = "Error executing Aggregate Query: " . $e->getMessage();
+    $results = [];
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Aggregate Query Results</title>
+    <style>
+        table { width: 80%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h1>Milestone 3: Aggregate Query Results</h1>
+    <p>
+        **Query Description:** Shows the **Number of Attendees** and the **Average Ticket Price** for each **Ticket Type**. (Uses NATURAL JOIN, COUNT, AVG, GROUP BY, ORDER BY).
+    </p>
+
+    <?php if (isset($error)): ?>
+        <p style="color: red;"><?php echo $error; ?></p>
+    <?php else: ?>
+        <h3>SQL Used:</h3>
+        <pre><?php echo htmlspecialchars(trim($sql)); ?></pre>
+
+        <h3>Results:</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Ticket Type</th>
+                    <th>Number of Attendees</th>
+                    <th>Average Ticket Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($results as $row): ?>
+                    <tr>
+                        <td><?php echo htmlspecialchars($row['TicketType']); ?></td>
+                        <td><?php echo htmlspecialchars($row['NumOfAttendees']); ?></td>
+                        <td>$<?php echo number_format($row['AvgTicketPrice'], 2); ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    <?php endif; ?>
+    
+    <p><a href="index.php">Back to Performance List (Read)</a></p>
+</body>
+</html>
