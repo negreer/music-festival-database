@@ -1,0 +1,151 @@
+<?php
+
+require_once("session.php"); 
+require_once("included_functions.php");
+require_once("database.php"); 
+
+// --- THIS IS THE CRITICAL FIX ---
+// Call your Database class's static method to get the PDO object
+$pdo = Database::DBConnect(); 
+
+// ... rest of your script logic ...
+
+// --- 1. HANDLE POST SUBMISSION (UPDATE Logic) ---
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // We get the PerformanceID from a hidden field in the form
+    if (isset($_POST['performance_id'], $_POST['artist_id'], $_POST['stage_id'], $_POST['start_date'], $_POST['start_time'], $_POST['end_date'], $_POST['end_time'])) {
+        
+        $performance_id = $_POST['performance_id'];
+        $artist_id = $_POST['artist_id'];
+        $stage_id = $_POST['stage_id'];
+        $start_time = $_POST['start_date'] . ' ' . $_POST['start_time'];
+        $end_time = $_POST['end_date'] . ' ' . $_POST['end_time'];
+
+        try {
+            // The UPDATE statement (Updates 4 core attributes: ArtistID, StageID, StartTime, EndTime)
+            $sql = "UPDATE Performance
+                    SET ArtistID = :artist_id,
+                        StageID = :stage_id,
+                        StartTime = :start_time,
+                        EndTime = :end_time
+                    WHERE PerformanceID = :performance_id";
+            
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                ':artist_id'      => $artist_id,
+                ':stage_id'       => $stage_id,
+                ':start_time'     => $start_time,
+                ':end_time'       => $end_time,
+                ':performance_id' => $performance_id
+            ]);
+
+            // Redirect back to the Read page upon success
+            header("Location: GreerMilestone4Read.php?success=updated");
+            exit;
+
+        } catch (\PDOException $e) {
+            $error = "Error updating performance: " . $e->getMessage();
+        }
+    } else {
+        $error = "Missing required fields for update.";
+    }
+}
+
+
+// --- 2. HANDLE GET REQUEST (FORM INITIAL LOAD) ---
+if (!isset($_GET['id'])) {
+    // If no ID is passed, redirect to the list
+    header("Location: GreerMilestone4Read.php?error=no_id");
+    exit;
+}
+
+$performance_id = $_GET['id'];
+$current_performance = null;
+
+try {
+    // Fetch the current performance data
+    $stmt_current = $pdo->prepare("SELECT * FROM Performance WHERE PerformanceID = :id");
+    $stmt_current->execute([':id' => $performance_id]);
+    $current_performance = $stmt_current->fetch(PDO::FETCH_ASSOC);
+
+    if (!$current_performance) {
+        $error = "Performance not found.";
+    }
+
+    // Fetch data for dropdowns (Artists and Stages)
+    $stmt_artists = $pdo->query("SELECT ArtistID, ArtistName FROM Artist ORDER BY ArtistName");
+    $artists = $stmt_artists->fetchAll();
+
+    $stmt_stages = $pdo->query("SELECT StageID, StageName FROM Stage ORDER BY StageName");
+    $stages = $stmt_stages->fetchAll();
+
+} catch (\PDOException $e) {
+    $error = "Failed to load data for update: " . $e->getMessage();
+}
+
+// Prepare values for pre-population if data was successfully fetched
+$start_date = $current_performance ? date('Y-m-d', strtotime($current_performance['StartTime'])) : '';
+$start_time = $current_performance ? date('H:i:s', strtotime($current_performance['StartTime'])) : '';
+$end_date = $current_performance ? date('Y-m-d', strtotime($current_performance['EndTime'])) : '';
+$end_time = $current_performance ? date('H:i:s', strtotime($current_performance['EndTime'])) : '';
+$selected_artist_id = $current_performance ? $current_performance['ArtistID'] : '';
+$selected_stage_id = $current_performance ? $current_performance['StageID'] : '';
+
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Update Performance</title>
+    </head>
+<body>
+    <h1>Update Performance (ID: <?php echo htmlspecialchars($performance_id); ?>)</h1>
+
+    <?php if (isset($error)): ?>
+        <p style="color: red;"><?php echo $error; ?></p>
+    <?php elseif ($current_performance): ?>
+
+        <form method="POST">
+            <input type="hidden" name="performance_id" value="<?php echo htmlspecialchars($performance_id); ?>">
+            
+            <label for="artist_id">Artist (Value 1):</label>
+            <select id="artist_id" name="artist_id" required>
+                <option value="">-- Select an Artist --</option>
+                <?php foreach ($artists as $artist): ?>
+                    <option value="<?php echo htmlspecialchars($artist['ArtistID']); ?>"
+                        <?php echo ($artist['ArtistID'] == $selected_artist_id) ? 'selected' : ''; ?>>
+                        <?php echo htmlspecialchars($artist['ArtistName']); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+            
+            <label for="stage_id">Stage (Value 2):</label>
+            <select id="stage_id" name="stage_id" required>
+                <option value="">-- Select a Stage --</option>
+                <?php foreach ($stages as $stage): ?>
+                    <option value="<?php echo htmlspecialchars($stage['StageID']); ?>"
+                        <?php echo ($stage['StageID'] == $selected_stage_id) ? 'selected' : ''; ?>>
+                        <?php echo htmlspecialchars($stage['StageName']); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+
+            <label for="start_date">Start Date (Value 3):</label>
+            <input type="date" id="start_date" name="start_date" value="<?php echo htmlspecialchars($start_date); ?>" required>
+
+            <label for="end_time">End Time (Value 4):</label>
+            <input type="time" id="end_time" name="end_time" value="<?php echo htmlspecialchars(date('H:i', strtotime($end_time))); ?>" required>
+            
+            <input type="hidden" name="start_time" value="<?php echo htmlspecialchars(date('H:i', strtotime($start_time))); ?>">
+            <input type="hidden" name="end_date" value="<?php echo htmlspecialchars($end_date); ?>">
+            
+            <br>
+            <button type="submit">Save Updates</button>
+        </form>
+    <?php endif; ?>
+    
+    <p><a href="GreerMilestone4Read.php">Back to Performance List</a></p>
+
+</body>
+</html>
