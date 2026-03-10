@@ -1,0 +1,57 @@
+-- Populate entities
+INSERT INTO Artist VALUES
+(1, 'The Sunbeats', 'Rock'),
+(2, 'Luna Lights', 'Pop'),
+(3, 'DJ Eclipse', 'EDM'),
+(4, 'Acoustic Flow', 'Folk'),
+(5, 'Jazz Collective', 'Jazz');
+
+INSERT INTO Stage VALUES
+(1, 'Main Stage', 10000),
+(2, 'River Stage', 5000),
+(3, 'Forest Stage', 2500);
+
+INSERT INTO Performance VALUES
+(1, 1, 1, '2025-05-21 18:00', '2025-05-21 19:30'),
+(2, 2, 1, '2025-05-21 20:00', '2025-05-21 21:30'),
+(3, 3, 2, '2025-05-22 19:00', '2025-05-22 20:30'),
+(4, 4, 3, '2025-05-22 17:00', '2025-05-22 18:00'),
+(5, 5, 2, '2025-05-23 16:00', '2025-05-23 17:30');
+
+INSERT INTO Attendee VALUES
+(1, 'Ava Johnson', 'ava.j@example.com', 24),
+(2, 'Liam Brown', 'liam.b@example.com', 29),
+(3, 'Noah Smith', 'noah.s@example.com', 38), 
+(4, 'Emma Davis', 'emma.d@example.com', 21),
+(5, 'Elijah Wilson', 'e.wilson@example.com', 45), 
+(6, 'Olivia Martinez', 'o.martinez@example.com', 19),
+(7, 'Lucas Garcia', 'l.garcia@example.com', 32),
+(8, 'Mia Rodriguez', 'm.rod@example.com', 27);
+
+INSERT INTO Ticket VALUES
+(1, 1, 'VIP Access', 350.00, '2024-12-01'),
+(2, 2, 'General Admission', 150.00, '2025-01-16'),
+(3, 3, 'VIP Access', 350.00, '2025-01-05'),
+(4, 4, 'Premium', 250.00, '2025-01-20'),       -- NEW TYPE
+(5, 5, 'General Admission', 150.00, '2025-01-15'),
+(6, 6, 'Student Discount', 120.00, '2025-01-22'),
+(7, 7, 'General Admission', 150.00, '2025-02-01'),
+(8, 8, 'Premium', 250.00, '2025-02-10'),       -- NEW TYPE
+(9, 1, 'General Admission', 150.00, '2025-02-15'),
+(10, 2, 'Student Discount', 120.00, '2025-02-16');
+
+INSERT INTO Vendor VALUES
+(1, 'Festival Feast', 'Food'),
+(2, 'Merch Mania', 'Merchandise'),
+(3, 'Chill Drinks', 'Beverage'),
+(4, 'Zen Zone', 'Service');
+
+INSERT INTO Sale VALUES
+(1, 1, 1, 25.50, '2025-05-21 18:30'),
+(2, 3, 2, 12.00, '2025-05-21 19:15'),
+(3, 2, 3, 50.00, '2025-05-22 17:45'),
+(4, 1, 4, 35.75, '2025-05-22 18:50'),
+(5, 1, 5, 15.00, '2025-05-22 19:30'),
+(6, 3, 6, 8.50, '2025-05-23 16:00'),
+(7, 2, 7, 75.00, '2025-05-23 17:00'),
+(8, 1, 8, 40.00, '2025-05-23 18:15');
