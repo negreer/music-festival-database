@@ -1,0 +1,81 @@
+<?php
+/**
+ * query_nested.php
+ * Displays the result of the Milestone 3 Nested Query.
+ */
+
+require_once 'included_functions.php';
+
+$pdo = db_connect(); 
+
+// SQL for Nested Query (from your Milestone 3 file):
+$sql = "
+    SELECT
+        a.Name,
+        a.Email,
+        t.Price
+    FROM
+        Attendee a
+    NATURAL JOIN 
+        Ticket t
+    WHERE
+        t.Price > (SELECT AVG(Price) FROM Ticket)
+";
+
+try {
+    $stmt = $pdo->query($sql);
+    $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+} catch (\PDOException $e) {
+    $error = "Error executing Nested Query: " . $e->getMessage();
+    $results = [];
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Nested Query Results</title>
+    <style>
+        table { width: 80%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h1>Milestone 3: Nested Query Results</h1>
+    <p>
+        **Query Description:** Retrieves the Name, Email, and Price of tickets for all **Attendees who purchased tickets with a price greater than the average ticket price** (Uses Nested Query).
+    </p>
+
+    <?php if (isset($error)): ?>
+        <p style="color: red;"><?php echo $error; ?></p>
+    <?php else: ?>
+        <h3>SQL Used:</h3>
+        <pre><?php echo htmlspecialchars(trim($sql)); ?></pre>
+
+        <h3>Results:</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Ticket Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($results as $row): ?>
+                    <tr>
+                        <td><?php echo htmlspecialchars($row['Name']); ?></td>
+                        <td><?php echo htmlspecialchars($row['Email']); ?></td>
+                        <td>$<?php echo number_format($row['Price'], 2); ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    <?php endif; ?>
+    
+    <p><a href="index.php">Back to Performance List (Read)</a></p>
+</body>
+</html>
