@@ -1,0 +1,54 @@
+-- Create entities
+CREATE TABLE Artist (
+    ArtistID INT PRIMARY KEY,
+    ArtistName VARCHAR(100),
+    Genre VARCHAR(50)
+);
+
+CREATE TABLE Stage (
+    StageID INT PRIMARY KEY,
+    StageName VARCHAR(50),
+    Capacity INT
+);
+
+CREATE TABLE Performance (
+    PerformanceID INT PRIMARY KEY,
+    ArtistID INT,
+    StageID INT,
+    StartTime DATETIME,
+    EndTime DATETIME,
+    FOREIGN KEY (ArtistID) REFERENCES Artist(ArtistID),
+    FOREIGN KEY (StageID) REFERENCES Stage(StageID)
+);
+
+CREATE TABLE Attendee (
+    AttendeeID INT PRIMARY KEY,
+    Name VARCHAR(100),
+    Email VARCHAR(150),
+    Age INT
+);
+
+CREATE TABLE Ticket (
+    TicketID INT PRIMARY KEY,
+    AttendeeID INT,
+    TicketType VARCHAR(50),
+    Price DECIMAL(8,2),
+    PurchaseDate DATE,
+    FOREIGN KEY (AttendeeID) REFERENCES Attendee(AttendeeID)
+);
+
+CREATE TABLE Vendor (
+    VendorID INT PRIMARY KEY,
+    VendorName VARCHAR(100),
+    Category VARCHAR(50)
+);
+
+CREATE TABLE Sale (
+    SaleID INT PRIMARY KEY,
+    VendorID INT,
+    AttendeeID INT,
+    SaleAmount DECIMAL(8,2),
+    SaleDate DATETIME,
+    FOREIGN KEY (VendorID) REFERENCES Vendor(VendorID),
+    FOREIGN KEY (AttendeeID) REFERENCES Attendee(AttendeeID)
+);
