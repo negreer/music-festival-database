@@ -1,0 +1,48 @@
+<?php
+
+// Include your required files
+require_once("session.php"); 
+require_once("included_functions.php");
+require_once("database.php"); 
+
+// --- THIS IS THE CRITICAL FIX ---
+// Call your Database class's static method to get the PDO object
+$pdo = Database::DBConnect(); 
+
+// ... rest of your script logic ...
+
+// 1. Check if an ID was passed in the URL
+if (!isset($_GET['id'])) {
+    header("Location: GreerMilestone4Read.php?error=no_id_for_delete");
+    exit;
+}
+
+$performance_id = $_GET['id'];
+
+try {
+    // Prepare and execute the DELETE statement
+    // We use a prepared statement for security against SQL injection
+    $sql = "DELETE FROM Performance WHERE PerformanceID = :id";
+    $stmt = $pdo->prepare($sql);
+    
+    // Execute the statement with the ID parameter
+    $stmt->execute([':id' => $performance_id]);
+    
+    // Check if any rows were affected
+    if ($stmt->rowCount() > 0) {
+        // Redirect back to the Read page with a success message
+        header("Location: GreerMilestone4Read.php?success=deleted");
+    } else {
+        // Redirect back if no record was found (e.g., ID was invalid)
+        header("Location: GreerMilestone4Read.php?error=delete_failed");
+    }
+    
+    exit;
+
+} catch (\PDOException $e) {
+    // Handle foreign key constraints (if a record is referenced elsewhere)
+    $error_message = urlencode("Error deleting performance: " . $e->getMessage());
+    header("Location: GreerMilestone4Read.php?error={$error_message}");
+    exit;
+}
+?>
