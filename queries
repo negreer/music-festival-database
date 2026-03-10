@@ -1,0 +1,34 @@
+--Query 1
+SELECT 
+    t.TicketType,
+    COUNT(a.AttendeeID) AS NumOfAttendees,
+    AVG(t.Price) AS AvgTicketPrice
+FROM Ticket t
+NATURAL JOIN Attendee a
+GROUP BY t.TicketType
+ORDER BY t.TicketType;
+
+
+--Query 2
+SELECT a.Name, a.Email, t.Price
+FROM Attendee a
+NATURAL JOIN Ticket t
+WHERE t.Price > (
+    SELECT AVG(Price)
+    FROM Ticket
+);
+
+
+--Query 3
+SELECT 
+    t.TicketType,
+    SUM(t.Price) AS TotalRevenue,
+    COUNT(a.AttendeeID) AS NumOfBuyers
+FROM Ticket t
+LEFT OUTER JOIN Attendee a
+    ON t.AttendeeID = a.AttendeeID
+GROUP BY t.TicketType
+ORDER BY TotalRevenue DESC;
+
+
+
